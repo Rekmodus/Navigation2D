@@ -45,12 +45,7 @@ namespace Navigation
 		private GameObject PathMarks;
 		private List<GameObject> pathObj = new List<GameObject>();
 
-
-
-
 		Navigation4Tilemap navigation4TilemapScript; //Make sure a Navigation4Tilemap script is in the scene
-
-
 
 		void Awake()
 		{
@@ -60,7 +55,19 @@ namespace Navigation
 
 		}
 
-		public void UpdateMap()
+		// Subscribing to the event
+        private void OnEnable()
+        {
+			Actions.OnMapInit += UpdateMap;
+        }
+		// Unsubscribing to the event
+		private void OnDisable()
+        {
+			Actions.OnMapInit -= UpdateMap;
+		}
+
+
+        public void UpdateMap()
 		{
 			//sync variables
 
