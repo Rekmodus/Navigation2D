@@ -11,41 +11,72 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Navigation4Tilemap
+namespace Navigation
 {
-	
+	public class NodeItem
+	{
+		// walkable
+		public bool isWall;
+		// node position
+		public Vector2 pos;
+		// position in node array
+		public int x, y;
+
+		// distance to start
+		public int costToStart;
+		// distance to end
+		public int costToEnd;
+
+		// total distance
+		public int costTotal
+		{
+			get { return costToStart + costToEnd; }
+		}
+
+		// parent node
+		public NodeItem parent;
+
+		public NodeItem(bool isWall, Vector2 pos, int x, int y)
+		{
+			this.isWall = isWall;
+			this.pos = pos;
+			this.x = x;
+			this.y = y;
+		}
+	}
+
 	public class Navigation4Tilemap : MonoBehaviour
 	{
-		private bool startFinding;
 		public bool showWallMark = true;
-		public bool showPath = true;
+		//public bool showPath = true;
 
 
 		// ~~~~~~~~~~~~~~ADDDED CODE~~~~~~~~~~
-		public bool mouse = false; // Option to navigate to the target instead of the mouse
+		//public bool mouse = false; // Option to navigate to the target instead of the mouse
+		//bool canMove = true;
+
 
 		public GameObject WallMark;
-		public GameObject PathMark;
-		public PathMode pathMode = PathMode.vertical;
-		public WalkMode walkMode = WalkMode.smooth;
+		//public PathMode pathMode = PathMode.vertical;
+		//public WalkMode walkMode = WalkMode.smooth;
 
 		public float Radius = 0.4f;
 
 		[Tooltip("Layer non walkable")]
 		public LayerMask wallLayer;
 
-		public Transform player;
+		//public Transform agent;
 
-		public Transform target; // Option to navigate to the target instead of the mouse
+		//public Transform target; // Option to navigate to the target instead of the mouse
 
-		private Vector3 destPos;
+		//private Vector3 destPos;
 
-		List<NodeItem> pathNodes;
+		//List<NodeItem> pathNodes;
 
-		[Tooltip("Make sense when walk mode is 'smooth', suggest 0 to 10")]
-		public float smoothMoveSpeed = 5f;
-		[Tooltip("Make sense when walk mode is 'step by step'")]
-		public float StepByStepInterval = 0.5f;
+		//[Tooltip("Make sense when walk mode is 'smooth', suggest 0 to 10")]
+		//public float smoothMoveSpeed = 5f;
+		//[Tooltip("Make sense when walk mode is 'step by step'")]
+		//public float StepByStepInterval = 0.5f;
 
 		[Tooltip("Position of tilemap's left bottom corner")]
 		public Vector2 tilemapStart;
@@ -53,49 +84,18 @@ namespace Navigation4Tilemap
 		public Vector2 tilemapEnd;
 
 		//walk direction
-		public WalkDirection walkDirec = WalkDirection.idle;
+		//public WalkDirection walkDirec = WalkDirection.idle;
 
-		public class NodeItem
-		{
-			// walkable
-			public bool isWall;
-			// node position
-			public Vector2 pos;
-			// position in node array
-			public int x, y;
+		public NodeItem[,] map;
+		[HideInInspector] public int w, h;
 
-			// distance to start
-			public int costToStart;
-			// distance to end
-			public int costToEnd;
-
-			// total distance
-			public int costTotal {
-				get { return costToStart + costToEnd; }
-			}
-
-			// parent node
-			public NodeItem parent;
-
-			public NodeItem (bool isWall, Vector2 pos, int x, int y)
-			{
-				this.isWall = isWall;
-				this.pos = pos;
-				this.x = x;
-				this.y = y;
-			}
-		}
-
-		private NodeItem[,] map;
-		private int w, h;
-
-		private GameObject WallMarks, PathMarks;
-		private List<GameObject> pathObj = new List<GameObject> ();
+		private GameObject WallMarks;
+		//private List<GameObject> pathObj = new List<GameObject> ();
 
 		void Awake ()
 		{
 			WallMarks = new GameObject ("WallMarks");
-			PathMarks = new GameObject ("PathMarks");
+			//PathMarks = new GameObject ("PathMarks");
 			initNavigationMap ();
 		}
 
@@ -123,13 +123,12 @@ namespace Navigation4Tilemap
 	*/
 		public void initNavigationMap ()
 		{
-			StopFinding ();
 			for (int i = 0; i < WallMarks.transform.childCount; i++) {  
 				Destroy (WallMarks.transform.GetChild (i).gameObject);  
 			}  
-			for (int i = 0; i < PathMarks.transform.childCount; i++) {  
-				PathMarks.transform.GetChild (i).gameObject.SetActive (false);
-			}  
+			//for (int i = 0; i < PathMarks.transform.childCount; i++) {  
+			//	PathMarks.transform.GetChild (i).gameObject.SetActive (false);
+			//}  
 			w = Mathf.RoundToInt (tilemapEnd.x - tilemapStart.x + 1);
 			h = Mathf.RoundToInt (tilemapEnd.y - tilemapStart.y + 1);
 			map = new NodeItem[w, h];
@@ -144,7 +143,7 @@ namespace Navigation4Tilemap
 					map [x, y] = new NodeItem (isWall, pos, x, y);
 					// mark unwalkable node
 					if (isWall && showWallMark && WallMark) {
-						GameObject obj = GameObject.Instantiate (WallMark, new Vector3 (pos.x + 0.5f, pos.y + 0.5f, 0), Quaternion.identity) as GameObject;
+						GameObject obj = Instantiate (WallMark, new Vector3 (pos.x + 0.5f, pos.y + 0.5f, 0), Quaternion.identity);
 						obj.transform.SetParent (WallMarks.transform);
 					}
 				}
@@ -153,49 +152,23 @@ namespace Navigation4Tilemap
 			// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ADDED THIS CODE~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 			//OnMouseDown();
 		}
+		
 
+
+		/*
 		void Update ()
 		{
 			// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ADDED THIS CODE~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-			
-			/*
-			if (smoothMoveSpeed > 0)
+			if (canMove)
 			{
-				if (startFinding)
-				{
-					FindingPath(new Vector2(player.position.x, player.position.y), new Vector2(destPos.x, destPos.y));
-				}
-				if ((destPos != player.transform.position))
+				FindingPath(new Vector2(agent.position.x, agent.position.y), new Vector2(destPos.x, destPos.y));
+				if ((destPos != agent.transform.position))
 				{
 					OnMouseDown();
 				}
 			}
-			else
-			{
-				StopAllCoroutines();
-			}
-			*/
-
-            if (Input.GetMouseButtonUp(0))
-            {
-				OnMouseUp();
-            }
-			if (Input.GetMouseButtonDown(0))
-			{
-				OnMouseDown();
-			}
-			
-			//~~~~~~~~~~~~~REMOVED THIS CODE
-			if (startFinding) {
-				FindingPath (new Vector2 (player.position.x, player.position.y), new Vector2 (destPos.x, destPos.y));
-			}
-			
 		}
 
-		/**
-	 * get Node by position
-	 * @param position node's world position
-	*/
 		public NodeItem getItem (Vector2 position)
 		{
 			int x = Mathf.FloorToInt (position.x - tilemapStart.x);
@@ -205,10 +178,7 @@ namespace Navigation4Tilemap
 			return map [x, y];
 		}
 
-		/**
-	 * get Nodes around
-	 * @param node
-	*/
+
 		public List<NodeItem> getNeighbourNodes (NodeItem node)
 		{
 			List<NodeItem> list = new List<NodeItem> ();
@@ -243,9 +213,6 @@ namespace Navigation4Tilemap
 			return list;
 		}
 
-		/**
-	 * update path, draw the path
-	 */ 
 		public void updatePath (List<NodeItem> lines)
 		{
 			int curListSize = pathObj.Count;
@@ -269,19 +236,17 @@ namespace Navigation4Tilemap
 
 		void OnMouseUp () // OnMouseUp seems to not call when mouse click is lifted. So calling this in Update might be necessary
 		{
-
-			Debug.Log("Mouse lifted");
-			StopFinding ();
+			//StopFinding ();
 
 			switch (walkMode) {
 			case WalkMode.smooth:
-				StartCoroutine (SmoothMovePlayer ());
+				StartCoroutine (SmoothMove ());
 				break;
 			case WalkMode.stepByStep:
-				StartCoroutine (StepByStepMovePlayer ());
+				StartCoroutine (StepByStepMove ());
 				break;
 			case WalkMode.blink:
-				BlinkMovePlayer ();
+				BlinkMove ();
 				break;
 			}
 
@@ -300,18 +265,26 @@ namespace Navigation4Tilemap
 
 			destPos = world;
 			StopAllCoroutines ();
-			StartFinding ();
+
 		}
 
-		/**
-	 * move player smoothly
-	 */ 
-		IEnumerator SmoothMovePlayer ()
+
+		
+		public void moveStart()
+        {
+			canMove = true;
+        }
+		public void moveStop()
+        {
+			canMove = false;
+        }
+
+		IEnumerator SmoothMove ()
 		{
 			for (int i = 0, max = pathNodes.Count; i < max; i++) {
 				bool isOver = false;
-				while (!isOver) {
-					Vector3 offSet = new Vector3 (pathNodes [i].pos.x + 0.5f, pathNodes [i].pos.y + 0.5f, 0) - player.position;
+				while (!isOver && canMove) {
+					Vector3 offSet = new Vector3 (pathNodes [i].pos.x + 0.5f, pathNodes [i].pos.y + 0.5f, 0) - agent.position;
 					if (offSet.y > 0) {
 						walkDirec = WalkDirection.up;
 					} else if (offSet.y < 0) {
@@ -323,11 +296,11 @@ namespace Navigation4Tilemap
 					} else {
 						walkDirec = WalkDirection.idle;
 					}
-						
-					player.position += offSet.normalized * smoothMoveSpeed * Time.deltaTime;
-					if (Vector2.Distance (pathNodes [i].pos + new Vector2 (0.5f, 0.5f), new Vector2 (player.position.x, player.position.y)) < 0.1f) {
+
+					agent.position += offSet.normalized * smoothMoveSpeed * Time.deltaTime;
+					if (Vector2.Distance (pathNodes [i].pos + new Vector2 (0.5f, 0.5f), new Vector2 (agent.position.x, agent.position.y)) < 0.1f) {
 						isOver = true;
-						player.position = new Vector3 (pathNodes [i].pos.x + 0.5f, pathNodes [i].pos.y + 0.5f, 0);
+						agent.position = new Vector3 (pathNodes [i].pos.x + 0.5f, pathNodes [i].pos.y + 0.5f, 0);
 					}
 					yield return new WaitForFixedUpdate ();
 				}
@@ -335,28 +308,19 @@ namespace Navigation4Tilemap
 			walkDirec = WalkDirection.idle;
 		}
 
-		/**
-	 * move player setp by step
-	 */ 
-		IEnumerator StepByStepMovePlayer ()
+		IEnumerator StepByStepMove()
 		{
 			for (int i = 0, max = pathNodes.Count; i < max; i++) {
-				player.position = new Vector3 (pathNodes [i].pos.x + 0.5f, pathNodes [i].pos.y + 0.5f, 0);
+				agent.position = new Vector3 (pathNodes [i].pos.x + 0.5f, pathNodes [i].pos.y + 0.5f, 0);
 				yield return new WaitForSeconds (StepByStepInterval);
 			}
 		}
 
-		/**
-	 * blink to target position
-	 */ 
-		void BlinkMovePlayer ()
+		void BlinkMove ()
 		{
-			player.position = new Vector3 (pathNodes [pathNodes.Count - 1].pos.x + 0.5f, pathNodes [pathNodes.Count - 1].pos.y + 0.5f, 0);
+			agent.position = new Vector3 (pathNodes [pathNodes.Count - 1].pos.x + 0.5f, pathNodes [pathNodes.Count - 1].pos.y + 0.5f, 0);
 		}
 
-		/**
-	 * A star Algorithm
-	 */
 		void FindingPath (Vector2 s, Vector2 e)
 		{
 			NodeItem startNode = getItem (s);
@@ -404,9 +368,6 @@ namespace Navigation4Tilemap
 			generatePath (startNode, null);
 		}
 
-		/**
-	 * generate path
-	 */
 		void generatePath (NodeItem startNode, NodeItem endNode)
 		{
 			List<NodeItem> path = new List<NodeItem> ();
@@ -421,14 +382,10 @@ namespace Navigation4Tilemap
 			updatePath (path);
 
 			//~~~~~~~~~~~~~~~~~~ADDED THIS CODE~~~~~~~~~~~
-			//OnMouseUp();
+			OnMouseUp();
 
 		}
 
-		/**
-		 * get distance between nodes
-		 * using diagonal distance
-		*/
 		int getDistanceBetweenNodes (NodeItem a, NodeItem b)
 		{
 			int cntX = Mathf.Abs (a.x - b.x);
@@ -446,16 +403,9 @@ namespace Navigation4Tilemap
 		//		return cntX + cntY;
 		//	}
 
-		public void StartFinding ()
-		{
-			startFinding = true;
-		}
-
-		public void StopFinding ()
-		{
-			startFinding = false;
-		}
+		*/
 	}
+	
 
 	public enum PathMode {
 		diagonal,
