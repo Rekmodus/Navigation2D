@@ -3,6 +3,10 @@
  * Created Data: 01/01/2018
  * A solution for navigation with Unity3D tilemap
 */
+
+/*
+ * Rekmodus: I edited some stuff
+ * */
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
@@ -15,6 +19,11 @@ namespace Navigation4Tilemap
 		private bool startFinding;
 		public bool showWallMark = true;
 		public bool showPath = true;
+
+
+		// ~~~~~~~~~~~~~~ADDDED CODE~~~~~~~~~~
+		public bool mouse = false; // Option to navigate to the target instead of the mouse
+
 		public GameObject WallMark;
 		public GameObject PathMark;
 		public PathMode pathMode = PathMode.vertical;
@@ -26,6 +35,8 @@ namespace Navigation4Tilemap
 		public LayerMask wallLayer;
 
 		public Transform player;
+
+		public Transform target; // Option to navigate to the target instead of the mouse
 
 		private Vector3 destPos;
 
@@ -88,6 +99,25 @@ namespace Navigation4Tilemap
 			initNavigationMap ();
 		}
 
+		// Drawing the bounds for easier editing
+		void OnDrawGizmos()
+		{
+			float width = tilemapEnd.x - tilemapStart.x;
+			float height = tilemapEnd.y - tilemapStart.y;	
+
+			Gizmos.color = Color.yellow;
+			float wHalf = (width * .5f);
+			float hHalf = (height * .5f);
+			Vector3 topLeftCorner = new Vector3(transform.position.x - wHalf, transform.position.y + hHalf, 1f);
+			Vector3 topRightCorner = new Vector3(transform.position.x + wHalf, transform.position.y + hHalf, 1f);
+			Vector3 bottomLeftCorner = new Vector3(transform.position.x - wHalf, transform.position.y - hHalf, 1f);
+			Vector3 bottomRightCorner = new Vector3(transform.position.x + wHalf, transform.position.y - hHalf, 1f);
+			Gizmos.DrawLine(topLeftCorner, topRightCorner);
+			Gizmos.DrawLine(topRightCorner, bottomRightCorner);
+			Gizmos.DrawLine(bottomRightCorner, bottomLeftCorner);
+			Gizmos.DrawLine(bottomLeftCorner, topLeftCorner);
+		}
+
 		/**
 	 * initiate navigation map
 	*/
@@ -119,13 +149,47 @@ namespace Navigation4Tilemap
 					}
 				}
 			}
+
+			// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ADDED THIS CODE~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			//OnMouseDown();
 		}
 
 		void Update ()
 		{
+			// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ADDED THIS CODE~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			
+			/*
+			if (smoothMoveSpeed > 0)
+			{
+				if (startFinding)
+				{
+					FindingPath(new Vector2(player.position.x, player.position.y), new Vector2(destPos.x, destPos.y));
+				}
+				if ((destPos != player.transform.position))
+				{
+					OnMouseDown();
+				}
+			}
+			else
+			{
+				StopAllCoroutines();
+			}
+			*/
+
+            if (Input.GetMouseButtonUp(0))
+            {
+				OnMouseUp();
+            }
+			if (Input.GetMouseButtonDown(0))
+			{
+				OnMouseDown();
+			}
+			
+			//~~~~~~~~~~~~~REMOVED THIS CODE
 			if (startFinding) {
 				FindingPath (new Vector2 (player.position.x, player.position.y), new Vector2 (destPos.x, destPos.y));
 			}
+			
 		}
 
 		/**
@@ -203,8 +267,10 @@ namespace Navigation4Tilemap
 			pathNodes = lines;
 		}
 
-		void OnMouseUp ()
+		void OnMouseUp () // OnMouseUp seems to not call when mouse click is lifted. So calling this in Update might be necessary
 		{
+
+			Debug.Log("Mouse lifted");
 			StopFinding ();
 
 			switch (walkMode) {
@@ -221,9 +287,17 @@ namespace Navigation4Tilemap
 
 		}
 
-		void OnMouseDown ()
+		void OnMouseDown () // OnMouseDown seems to not call when mouse is clicked. So calling this in Update might be necessary
 		{
-			Vector3 world = Camera.main.ScreenToWorldPoint (Input.mousePosition);
+			// ~~~~~~~~~~~~~~ ADDED CODE ~~~~~~~~~~~~
+
+			Vector3 world = target.transform.position; //the target
+			if (mouse) {
+				world = Camera.main.ScreenToWorldPoint(Input.mousePosition); //mouse pointer
+			} else{
+				world = target.transform.position; //the target
+			}
+
 			destPos = world;
 			StopAllCoroutines ();
 			StartFinding ();
@@ -345,6 +419,10 @@ namespace Navigation4Tilemap
 				path.Reverse ();
 			}
 			updatePath (path);
+
+			//~~~~~~~~~~~~~~~~~~ADDED THIS CODE~~~~~~~~~~~
+			//OnMouseUp();
+
 		}
 
 		/**
