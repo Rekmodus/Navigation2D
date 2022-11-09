@@ -8,3 +8,5 @@ Script of Navigation2D in Unity3D.
 
 ## sample video
 [sample](https://youtu.be/RPmuCtcldBg)
+
+This branch should make Navigation2D work with the new unity stuff
