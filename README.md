@@ -8,3 +8,5 @@ Script of Navigation2D in Unity3D.
 
 ## sample video
 [sample](https://youtu.be/RPmuCtcldBg)
+
+This branch to experiment how to make a zombie follow system. 
