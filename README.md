@@ -1,5 +1,6 @@
 # Navigation2D
 Script of Navigation2D in Unity3D. 
+CHECK OUT THE OTHER BRANCHES TO SEE THE NEW WAYS TO USE THIS
 
 ## To run the sample:
 1. in case that the sample running with tilemap, so need Unity3D version >= 2017.2
